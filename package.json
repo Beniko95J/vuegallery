@@ -10,7 +10,11 @@
   "dependencies": {
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "less": "^4.1.1",
+    "less-loader": "^5.0.0",
+    "style-resources-loader": "^1.4.1",
     "vue": "^2.6.11",
+    "vue-cli-plugin-style-resources-loader": "^0.1.5",
     "vue-router": "^3.2.0"
   },
   "devDependencies": {
