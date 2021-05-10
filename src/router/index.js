@@ -6,7 +6,7 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    component: () => import('@/components/gallery-list/gallery-list')
+    component: () => import('@/components/gallery-header')
   },
 ]
 
