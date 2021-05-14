@@ -1,4 +1,9 @@
 <template>
+  <transition
+  appear 
+  appear-class="custom-appear-class"
+  appear-to-class="custom-appear-to-class"
+  appear-active-class="custom-appear-active-class">
   <div class="gallery-list-container" ref="galleryListContainer">
     <div 
     class="gallery-list-item"
@@ -9,6 +14,7 @@
       <img :src="img.src" alt="">
     </div>
   </div>
+  </transition>
 </template>
 
 <script>
@@ -21,13 +27,13 @@ export default {
       itemCol: 3,
       itemRight: 10,
       itemBottom: 10,
+      containerWidth: 0,
+      lock: true,
     }
   },
   computed: {
     itemWidth: function() {
-      let containerWidth = this.$refs.galleryListContainer.offsetWidth
-      console.log(containerWidth)
-      return (containerWidth - this.itemCol * this.itemRight) / this.itemCol
+      return (this.containerWidth - this.itemCol * this.itemRight) / this.itemCol
     }
   },
   methods: {
@@ -55,23 +61,32 @@ export default {
         "https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=2372825572,3775270174&fm=26&gp=0.jpg",
       ]
     },
+    imgPreloading() {
+      this.initHeightList()
+      for (let i = 0; i < this.imgList.length; i++) {
+        if (!this.itemList[i]) {
+          let img = new Image()
+          img.src = this.imgList[i]
+          img.onload = () => {
+            let imgData = {};
+            imgData.imgWidth = img.width
+            imgData.imgHeight = img.height
+            imgData.height = this.itemWidth / imgData.imgWidth * imgData.imgHeight
+            imgData.src = this.imgList[i]
+            this.itemList.push(imgData)
+            this.reflow(imgData)
+          }
+        }
+        else {
+          this.itemList[i].height = this.itemWidth / this.itemList[i].imgWidth * this.itemList[i].imgHeight
+          this.reflow(this.itemList[i])
+        }
+      }
+    },
     initHeightList() {
       this.heightList = new Array(this.itemCol)
       for (let i = 0; i < this.itemCol; i++) {
         this.heightList[i] = 0
-      }
-    },
-    imgPreloading() {
-      for (let i = 0; i < this.imgList.length; i++) {
-        let img = new Image()
-        img.src = this.imgList[i]
-        img.onload = () => {
-          let imgData = {};
-          imgData.height = this.itemWidth / img.width * img.height
-          imgData.src = this.imgList[i]
-          this.itemList.push(imgData)
-          this.reflow(imgData)
-        }        
       }
     },
     reflow(imgData) {
@@ -83,12 +98,27 @@ export default {
     filterMin() {
       let minHeight = Math.min(...this.heightList)
       return this.heightList.indexOf(minHeight)
-    }
+    },
+    wait(func, time=300) {
+      if(this.lock) {
+        this.lock = false
+        setTimeout(() => {
+          func()
+          this.lock = true
+        }, time)
+      }
+    },
   },
   created() {
     this.getImgs()
-    this.initHeightList()
     this.imgPreloading()
+  },
+  mounted() {
+    this.containerWidth = this.$refs.galleryListContainer.offsetWidth
+    window.onresize = () => {
+      this.containerWidth = this.$refs.galleryListContainer.offsetWidth
+      this.wait(this.imgPreloading)
+    }
   }
 }
 </script>
@@ -98,6 +128,7 @@ export default {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: scroll;
   .gallery-list-item {
     position: absolute;
     img {
@@ -106,5 +137,17 @@ export default {
       object-fit: contain;
     }
   }
+}
+
+.custom-appear-class{
+	opacity: 0
+}
+
+.custom-appear-active-class{
+	transition: opacity 2s;
+}
+
+.custom-appear-to-class{
+	opacity: 0.5
 }
 </style>
