@@ -7,23 +7,79 @@
 <script>
 export default {
   props: {
-
-  },
-  date() {
-    return {
-
+    // autoResize: {
+    //   default: true
+    // },
+    // interval: {
+    //   default: 200,
+    //   validator: (val) => val >= 0
+    // },
+    align: {
+      default: 'center',
+      validator: (val) => ['left', 'center', 'right'].indexOf(val) >= 0
+    },
+    // line: {
+    //   default: 'v',
+    //   validator: (val) => ['v', 'h'].indexOf(val) >= 0
+    // },
+    lineGap: {
+      required: true,
+      validator: (val) => val >= 0
+    },
+    minLineGap: {
+      validator: (val) => val >= 0
+    },
+    maxLineGap: {
+      validator: (val) => val >= 0
+    },
+    grow: {
+      default: [],
+      validator: (val) => val instanceof Array
     }
   },
+  // data() {
+  //   return {
+  //     style: {
+  //       height: '',
+  //       overflow: '',
+  //     }
+  //   }
+  // },
   methods: {
     reflow() {
-      let width = this.$el.clientWidth;
+      // let width = this.$el.clientWidth;
       let metas = this.$children.map((slot) => slot.getMeta())
       metas.sort((a, b) => a.order - b.order)
+
+      this.virtualRects = metas.map(() => {})
+      this.calculate(metas, virtualRects)
+      
+      this.render(rects, metas)
+      this.$emit('reflowed', this)
+    },
+    calculate(metas, rects) {
+      let options = this.getOptions()
+      let processor = verticalLineProcessor //FIXME: should be selective
+      processor.calculate(this, options, metas, rects)
     },
     getOptions() {
+      const maxLineGap = this.maxLineGap ? this.maxLineGap : this.lineGap * 1.1
+      const minLineGap = this.minLineGap ? this.minLineGap : this.lineGap * 0.9
       return {
-
+        align: this.align,
+        lineGap: this.lineGap,
+        minLineGap: minLineGap,
+        maxLineGap: maxLineGap,
+        grow: this.grow
       }
+    },
+    render(rects, metas) {
+      let beforeRects = getRects(metas)
+      applyRects(rects, metas)
+      let afterRects = getRects(metas)
+      metas.forEach((meta, i) => {
+        setTransform(meta.node, beforeRects[i], afterRects[i])
+      })
     }
   },
   created() {
@@ -32,7 +88,7 @@ export default {
     })
   },
   mounted() {
-
+    on(this.$el, 'transitionend', tidyUpAnimations, true)
   }
 }
 
@@ -42,6 +98,21 @@ var verticalLineProcessor = (() => {
     let grow = options.grow
     let strategy = grow ? getRowStrategyWithGrow(width, grow) : getRowStrategy(width, options)
     
+    let tops = getArrayFillWith(0, strategy.count)
+
+    // calculate top, left, width, height of each box
+    metas.forEach((meta, index) => {
+      let minIdx = tops.reduce((minIdx, top, idx) => top < tops[minIdx] ? idx : minIdx, 0)
+      let width = strategy.width[minIdx]
+      let rect = rects[minIdx]
+      rect.top = tops[minIdx]
+      rect.left = strategy.toLeft + strategy.width.slice(0, minIdx).reduce((sum, val) => sum + val)
+      rect.width = width
+      rect.height = meta.height * width / meta.width
+      tops[offset] = tops[offset] + rect.height
+    })
+
+    // vm.style.height = Math.max(...tops) + 'px'
   }
 
   function getRowStrategy(width, options) {
@@ -77,7 +148,7 @@ var verticalLineProcessor = (() => {
     return {
       width: getArrayFillWith(slotWidth, count),
       count: count,
-      remain: getRemain(width, slotWidth * count, options.align)
+      toLeft: getToLeft(width, slotWidth * count, options.align)
     }
   }
 
@@ -87,8 +158,12 @@ var verticalLineProcessor = (() => {
     return {
       width: grow.map(val => width * val / sum),
       count: grow.length,
-      remain: 0
+      toLeft: 0
     }
+  }
+
+  return {
+    calculate
   }
 })()
 
@@ -102,7 +177,7 @@ function getArrayFillWith(item, count) {
   return arr
 }
 
-function getRemain(width, contentWidth, align) {
+function getToLeft(width, contentWidth, align) {
   switch (align) {
     case 'right':
       return width - contentWidth
@@ -112,6 +187,43 @@ function getRemain(width, contentWidth, align) {
       return 0
   }
 }
+
+function getRects(metas) {
+  return metas.map(meta => meta.vm.rect)
+}
+
+function applyRects(rects, metas) {
+  rects.forEach((rect, i) => {
+    let style = metas[i].node.style
+    metas[i].vm.rect = rect
+    for (let prop in rect) {
+      style[prop] = rect[prop] + 'px'
+    }
+  })
+}
+
+function setTransform(node, beforeRect, afterRect) {
+  let dx = beforeRect.left - afterRect.left
+  let dy = beforeRect.top - afterRect.top
+  let sw = beforeRect.width / afterRect.width
+  let sh = beforeRect.height / afterRect.height
+  node.style.transform = `translate({${dx}px, {${dy}px) scale(${sw},${sh})`
+  node.style.transitionDuration = '0s'
+}
+
+function clearTransform(node) {
+  node.style.transform = ''
+  node.style.transitionDuration = ''
+}
+
+function tidyUpAnimations(event) {
+  let node = event.target
+  clearTransform(node)
+}
+
+function on(element, eventType, callback, useCapture=false) {
+  element.addEventListener(eventType, callback, useCapture)
+}
 </script>
 
 <style>
@@ -119,5 +231,6 @@ function getRemain(width, contentWidth, align) {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow-y: scroll;
 }
 </style>
