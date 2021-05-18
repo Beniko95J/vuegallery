@@ -10,10 +10,10 @@ export default {
     // autoResize: {
     //   default: true
     // },
-    // interval: {
-    //   default: 200,
-    //   validator: (val) => val >= 0
-    // },
+    interval: {
+      default: 200,
+      validator: (val) => val >= 0
+    },
     align: {
       default: 'center',
       validator: (val) => ['left', 'center', 'right'].indexOf(val) >= 0
@@ -37,15 +37,20 @@ export default {
       validator: (val) => val instanceof Array
     }
   },
-  // data() {
-  //   return {
-  //     style: {
-  //       height: '',
-  //       overflow: '',
-  //     }
-  //   }
-  // },
+  data() {
+    return {
+      // style: {
+      //   height: '',
+      //   overflow: '',
+      // },
+      token: null
+    }
+  },
   methods: {
+    reflowHandler() {
+      clearTimeout(this.token)
+      this.token = setTimeout(this.reflow, this.interval)
+    },
     reflow() {
       // let width = this.$el.clientWidth;
       let metas = this.$children.map((slot) => slot.getMeta())
