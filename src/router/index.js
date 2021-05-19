@@ -8,6 +8,10 @@ const routes = [
     path: '/',
     component: () => import('@/components/gallery-header')
   },
+  {
+    path: '/test',
+    component: () => import('@/views/test')
+  }
 ]
 
 const router = new VueRouter({

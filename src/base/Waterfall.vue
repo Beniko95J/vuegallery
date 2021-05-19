@@ -33,8 +33,10 @@ export default {
       validator: (val) => val >= 0
     },
     grow: {
-      default: [],
       validator: (val) => val instanceof Array
+    },
+    watch: {
+      default: () => ({})
     }
   },
   data() {
@@ -47,6 +49,13 @@ export default {
     }
   },
   methods: {
+    autoResizeHandler(autoResize) {
+      if (autoResize === false) {
+        off(window, 'resize', this.reflowHandler, false)
+      } else {
+        on(window, 'resize', this.reflowHandler, false)
+      }
+    },
     reflowHandler() {
       clearTimeout(this.token)
       this.token = setTimeout(this.reflow, this.interval)
@@ -88,12 +97,26 @@ export default {
     }
   },
   created() {
+    this.virtualRects = []
     this.$on('reflow', () => {
-
+      this.reflowHandler()
     })
+    this.$watch(() => {
+      this.align,
+      this.lineGap,
+      this.minLineGap,
+      this.maxLineGap,
+      this.grow,
+      this.watch
+    }, this.reflowHandler)
   },
   mounted() {
     on(this.$el, 'transitionend', tidyUpAnimations, true)
+    this.autoResizeHandler(true)
+  },
+  beforeDestroy() {
+    this.autoResizeHandler(false)
+    off(this.$el, 'transitioned', tidyUpAnimations, true)
   }
 }
 
@@ -109,12 +132,12 @@ var verticalLineProcessor = (() => {
     metas.forEach((meta, index) => {
       let minIdx = tops.reduce((minIdx, top, idx) => top < tops[minIdx] ? idx : minIdx, 0)
       let width = strategy.width[minIdx]
-      let rect = rects[minIdx]
+      let rect = rects[index]
       rect.top = tops[minIdx]
       rect.left = strategy.toLeft + strategy.width.slice(0, minIdx).reduce((sum, val) => sum + val)
       rect.width = width
       rect.height = meta.height * width / meta.width
-      tops[offset] = tops[offset] + rect.height
+      tops[minIdx] = tops[minIdx] + rect.height
     })
 
     // vm.style.height = Math.max(...tops) + 'px'
@@ -228,6 +251,10 @@ function tidyUpAnimations(event) {
 
 function on(element, eventType, callback, useCapture=false) {
   element.addEventListener(eventType, callback, useCapture)
+}
+
+function off(element, eventType, callback, useCapture=false) {
+  element.removeEventListener(eventType, callback, useCapture)
 }
 </script>
 
