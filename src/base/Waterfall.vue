@@ -1,5 +1,5 @@
 <template>
-  <div class="waterfall">
+  <div class="waterfall" :style="style">
     <slot></slot>
   </div>
 </template>
@@ -41,10 +41,10 @@ export default {
   },
   data() {
     return {
-      // style: {
-      //   height: '',
-      //   overflow: '',
-      // },
+      style: {
+        height: '',
+        overflow: 'scroll',
+      },
       token: null
     }
   },
@@ -65,10 +65,10 @@ export default {
       let metas = this.$children.map((slot) => slot.getMeta())
       metas.sort((a, b) => a.order - b.order)
 
-      this.virtualRects = metas.map(() => {})
-      this.calculate(metas, virtualRects)
+      this.virtualRects = metas.map(() => ({})) // () is important
+      this.calculate(metas, this.virtualRects)
       
-      this.render(rects, metas)
+      this.render(this.virtualRects, metas)
       this.$emit('reflowed', this)
     },
     calculate(metas, rects) {
@@ -134,13 +134,13 @@ var verticalLineProcessor = (() => {
       let width = strategy.width[minIdx]
       let rect = rects[index]
       rect.top = tops[minIdx]
-      rect.left = strategy.toLeft + strategy.width.slice(0, minIdx).reduce((sum, val) => sum + val)
+      rect.left = strategy.toLeft + (minIdx ? strategy.width.slice(0, minIdx).reduce((sum, val) => sum + val) : 0)
       rect.width = width
       rect.height = meta.height * width / meta.width
       tops[minIdx] = tops[minIdx] + rect.height
     })
 
-    // vm.style.height = Math.max(...tops) + 'px'
+    vm.style.height = Math.max(...tops) + 'px'
   }
 
   function getRowStrategy(width, options) {
@@ -261,8 +261,5 @@ function off(element, eventType, callback, useCapture=false) {
 <style>
 .waterfall {
   position: relative;
-  width: 100%;
-  height: 100%;
-  overflow-y: scroll;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <waterfall
-      :align="center"
+      align="center"
       :line-gap="200"
       :min-line-gap="100"
       :max-line-gap="220"
@@ -24,8 +24,7 @@
 <script>
 import Waterfall from '@/base/Waterfall'
 import WaterfallSlot from '@/base/WaterfallSlot'
-import ItemFactory from '@/utils'
-import WaterfallSlot from '../base/WaterfallSlot.vue'
+import { ItemFactory } from '@/utils'
 
 export default {
   components: {
@@ -60,6 +59,7 @@ export default {
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 </style>
