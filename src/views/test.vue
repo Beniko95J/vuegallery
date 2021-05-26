@@ -13,6 +13,7 @@
         :width="item.width"
         :height="item.height"
         :order="index"
+        move-class="item-move"
         :key="item.index"
       >
         <div class="item" :style="item.style" :index="item.index"></div>
@@ -33,7 +34,7 @@ export default {
   },
   data() {
     return {
-      items: ItemFactory.get(100),
+      items: ItemFactory.get(1000),
       isBusy: false
     }
   },
@@ -61,5 +62,10 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
   }
+}
+
+.item-move {
+  transition: all .5s cubic-bezier(.55,0,.1,1);
+  -webkit-transition: all .5s cubic-bezier(.55,0,.1,1);
 }
 </style>

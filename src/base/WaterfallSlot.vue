@@ -18,6 +18,9 @@ export default {
     order: {
       default: 0,
       validator: (val) => val >= 0
+    },
+    moveClass: {
+      default: ''
     }
   },
   data() {
@@ -36,7 +39,7 @@ export default {
         order: this.order,
         width: this.width,
         height: this.height,
-        // moveClass: this.moveClass,
+        moveClass: this.moveClass,
       }
     }
   },

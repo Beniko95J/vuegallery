@@ -68,6 +68,7 @@ export default {
       this.virtualRects = metas.map(() => ({})) // () is important
       this.calculate(metas, this.virtualRects)
       
+      this.style.overflow = 'hidden'
       this.render(this.virtualRects, metas)
       this.$emit('reflowed', this)
     },
@@ -93,6 +94,7 @@ export default {
       let afterRects = getRects(metas)
       metas.forEach((meta, i) => {
         setTransform(meta.node, beforeRects[i], afterRects[i])
+        addClass(meta.node, meta.moveClass)
       })
     }
   },
@@ -236,7 +238,7 @@ function setTransform(node, beforeRect, afterRect) {
   let sw = beforeRect.width / afterRect.width
   let sh = beforeRect.height / afterRect.height
   node.style.transform = `translate({${dx}px, {${dy}px) scale(${sw},${sh})`
-  node.style.transitionDuration = '0s'
+  // node.style.transitionDuration = '0.0s'
 }
 
 function clearTransform(node) {
@@ -255,6 +257,32 @@ function on(element, eventType, callback, useCapture=false) {
 
 function off(element, eventType, callback, useCapture=false) {
   element.removeEventListener(eventType, callback, useCapture)
+}
+
+function addClass (elem, name) {
+  if (!hasClass(elem, name)) {
+    let cur = attr(elem, 'class').trim()
+    let res = (cur + ' ' + name).trim()
+    attr(elem, 'class', res)
+  }
+}
+
+// function removeClass (elem, name) {
+//   let reg = new RegExp('\\s*\\b' + name + '\\b\\s*', 'g')
+//   let res = attr(elem, 'class').replace(reg, ' ').trim()
+//   attr(elem, 'class', res)
+// }
+
+function hasClass (elem, name) {
+  return (new RegExp('\\b' + name + '\\b')).test(attr(elem, 'class'))
+}
+
+function attr (elem, name, value) {
+  if (typeof value !== 'undefined') {
+    elem.setAttribute(name, value)
+  } else {
+    return elem.getAttribute(name) || ''
+  }
 }
 </script>
 

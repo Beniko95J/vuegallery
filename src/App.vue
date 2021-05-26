@@ -25,11 +25,9 @@ export default {
 #app {
   position: relative;
   width: 100%;
-  height: 100%;
 
   .router_view {
     width: 100%;
-    height: 100%;
   }
 }
 </style>
